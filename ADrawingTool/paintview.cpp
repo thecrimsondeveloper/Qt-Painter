@@ -2,6 +2,8 @@
 #include <QMouseEvent>
 #include <QColor>
 #include <QPainter>
+#include <iostream>
+using namespace std;
 
 
 
@@ -10,9 +12,12 @@ PaintView::PaintView(QWidget *parent): QWidget{parent}
 {
     setAttribute(Qt::WA_StaticContents);
     modified = false;
-    painting = false;
-    myPenWidth = 1;
-    myPenColor = Qt::blue;
+
+    pen = new CoolPen();
+    pen->color = Qt::blue;
+    pen->width = 10;
+    pen->painting = false;
+    pen->shape = CoolPen::Shape::Circle;
 }
 
 bool PaintView::openImage(const QString &fileName)
@@ -46,15 +51,7 @@ bool PaintView::saveImage(const QString &fileName, const char *fileFormat)
     }
 }
 
-void PaintView::setPenColor(const QColor &newColor)
-{
-    myPenColor = newColor;
-}
 
-void PaintView::setPenWidth(int newWidth)
-{
-    myPenWidth = newWidth;
-}
 
 void PaintView::clearImage()
 {
@@ -66,25 +63,29 @@ void PaintView::mousePressEvent(QMouseEvent *event)
 {
     if(event->button() == Qt::LeftButton)
     {
-        lastPoint = event->pos();
-        painting = true;
+        pen->lastPoint = event->pos();
+        pen->painting = true;
     }
 }
 
-void PaintView::mouseMoveEvent(QMouseEvent *event)
-{
-    if(event->buttons() & Qt::LeftButton && painting)
-    {
-        drawLineTo(event->pos());
+void PaintView::mouseMoveEvent(QMouseEvent *event) {
+    if (event->buttons() & Qt::LeftButton && pen && pen->painting) {
+
+        cout << "Mouse move event " << event->pos().x() << " " << event->pos().y() << endl;
+        QRect* rect = pen->drawLineTo(event->pos(), image);
+        modified = true;
+        update(*rect);
     }
 }
+
 
 void PaintView::mouseReleaseEvent(QMouseEvent *event)
 {
     if(event->buttons() & Qt::LeftButton)
     {
-        drawLineTo(event->pos());
-        painting = false;
+        QRect rect = *pen->drawLineTo(event->pos(), image);
+        modified = true;
+        pen->painting = false;
     }
 }
 
@@ -109,20 +110,7 @@ void PaintView::resizeEvent(QResizeEvent *event)
     QWidget::resizeEvent(event);
 }
 
-void PaintView::drawLineTo(const QPoint &endPoint)
-{
-    QPainter painter(&image);
-    painter.setPen(QPen(myPenColor, myPenWidth, Qt::SolidLine, Qt::RoundCap, Qt::RoundJoin));
-    painter.drawLine(lastPoint,endPoint);
 
-    modified = true;
-
-    int rad = (myPenWidth / 2) + 2;
-    QRect updateRect = QRect(lastPoint, endPoint).normalized().adjusted(-rad, -rad, +rad, +rad);
-    update(updateRect);
-
-    lastPoint = endPoint;
-}
 
 void PaintView::resizeImage(QImage *image, const QSize &newSize)
 {
@@ -136,24 +124,5 @@ void PaintView::resizeImage(QImage *image, const QSize &newSize)
     *image = newImage;
 }
 
-void PaintView::print(){
-
-// #if QT_CONFIG(
-
-// #endif
-
-}
-
-// QPrinter printer(QPrinter::HighResolution);
-// QPrintDialog printerDialog(&printer, this);
-// if(printDialog.exec() == QDialog::Accepted)
-// {
-//     QPaintyer painter(&printer);
-//     QSize size = image.size();
-//     size.scale(rect.size(), Qt::KeepAspectRatio);
-//     painter.setViewport(rect.x(), rect.y(), size.width(), size.height());
-//     painter.setWindow(image.rect());
-//     painter.drawImage(0,0, image);
-// }
 
 

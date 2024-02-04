@@ -6,25 +6,23 @@
 #include <QImage>
 #include <QPoint>
 
+#include "coolpen.h"
+
 
 class PaintView : public QWidget
 {
     Q_OBJECT
 public:
+    CoolPen *pen;
+
     explicit PaintView(QWidget *parent = nullptr);
     bool openImage(const QString &fileName);
     bool saveImage(const QString &fileName, const char *fileFormat);
-    void setPenColor(const QColor &newColor);
-    void setPenWidth(int newWidth);
-
-
     bool isModified() const {return modified; }
-    QColor penColor() const { return myPenColor; }
-    int penWidth() const {return myPenWidth;}
+    QColor penColor() const { return pen->color; }
+    int penWidth() const {return pen->width;}
 public slots:
     void clearImage();
-    void print();
-
 
 protected:
     void mousePressEvent(QMouseEvent *event) override;
@@ -34,15 +32,10 @@ protected:
     void resizeEvent(QResizeEvent *event) override;
 
 private:
-    void drawLineTo(const QPoint &endPoint);
+
     void resizeImage (QImage *image, const QSize &newSize);
     bool modified;
-    bool painting;
-    QColor myPenColor;
-    int myPenWidth;
     QImage image;
-    QPoint lastPoint;
-
 
 signals:
 };

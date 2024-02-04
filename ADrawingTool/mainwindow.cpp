@@ -11,6 +11,7 @@
 #include <QInputDialog>
 #include <QMessageBox>
 #include <QImageWriter>
+#include <QSlider>
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
@@ -19,6 +20,8 @@ MainWindow::MainWindow(QWidget *parent)
     ui->setupUi(this);
 
     paintView = new PaintView();
+
+
 
     setCentralWidget(paintView);
     createActions();
@@ -73,9 +76,11 @@ void MainWindow::penColor(){
     QColor newColor = QColorDialog::getColor(paintView->penColor());
     if(newColor.isValid())
     {
-        paintView->setPenColor(newColor);
+        paintView->pen->color = newColor;
     }
 }
+
+
 
 void MainWindow::penWidth(){
     bool ok;
@@ -87,7 +92,7 @@ void MainWindow::penWidth(){
 
     if(ok)
     {
-        paintView->setPenWidth(newWidth);
+        paintView->pen->width = newWidth;
     }
 }
 
@@ -168,17 +173,91 @@ void MainWindow::createMenus(){
 
 void MainWindow::createTools()
 {
-    QPushButton *redColorButton = new QPushButton();
-    //add redColorButton to the central widget
-    redColorButton->setText("Red");
-    redColorButton->setStyleSheet("background-color: red");
-    redColorButton->setGeometry(10,10,50,50);
-    redColorButton->show();
-    connect(redColorButton, SIGNAL(clicked()), this, SLOT(penColor()));
+    QColor colors[] = {Qt::red, Qt::green, Qt::blue, Qt::yellow, Qt::black, Qt::white};
 
-    //add it to the form
-    this->layout()->addWidget(redColorButton);
+    //loop through each color and create a button
+    for(int i = 0; i < 6; i++)
+    {
+        int yOffset = 30;
+        int xOffset = 50;
+        int spacing =5;
+        QPushButton *colorButton = new QPushButton();
+
+        this->layout()->addWidget(colorButton);
+
+
+        colorButton->setStyleSheet(QString("background-color: %1").arg(colors[i].name()));
+        colorButton->setFixedSize(40,20);
+        colorButton->setAutoFillBackground(true);
+        colorButton->show();
+
+        //add an event to this button so that it sets the pen color
+        connect(colorButton, &QPushButton::clicked, [=](){
+            paintView->pen->color = colors[i];
+        });
+
+
+
+        int yPos = i * (24 + spacing) + yOffset;
+        //set to the width of the layout - the width of this button
+        int xPos = this->width() + xOffset;
+        colorButton->move(xPos, yPos);
+        //connect the button to the slot so that is sets the pen color
+    }
+
+    //setup slider to set pen width
+    QSlider *penWidthSlider = new QSlider(Qt::Vertical, this);
+    penWidthSlider->setRange(1,50);
+    penWidthSlider->setValue(10);
+    penWidthSlider->setGeometry(10, 30, 20, 100);
+
+    //set text
+    penWidthSlider->setTickPosition(QSlider::TicksBothSides);
+    penWidthSlider->setTickInterval(5);
+    penWidthSlider->setSingleStep(1);
+
+
+
+    //move to the left of the color buttons
+    penWidthSlider->move(this->width() + 10, 30);
+
+    //when the slider is moved, set the pen width
+    connect(penWidthSlider, &QSlider::valueChanged, [=](){
+        paintView->pen->width = penWidthSlider->value();
+    });
+
+    //add to layout
+    this->layout()->addWidget(penWidthSlider);
+
+
+    int shapeButtonX = this->width() - 50;
+
+
+    //add a button to set the pen shape
+    QPushButton *penRectangleButton = new QPushButton("[]", this);
+    penRectangleButton->setGeometry(shapeButtonX, 50, 30, 30);
+    penRectangleButton->show();
+
+    //when the button is clicked, set the pen shape
+    connect(penRectangleButton, &QPushButton::clicked, [=](){
+        paintView->pen->shape = CoolPen::Shape::Rectangle;
+    });
+
+    QPushButton *penCircleButton = new QPushButton("O", this);
+    penCircleButton->setGeometry(shapeButtonX, 100, 30, 30);
+    penCircleButton->show();
+
+    //when the button is clicked, set the pen shape
+    connect(penCircleButton, &QPushButton::clicked, [=](){
+        paintView->pen->shape = CoolPen::Shape::Circle;
+    });
+
+
+
+
 }
+
+
 
 
 bool MainWindow::maybeSave() {

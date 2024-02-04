@@ -19,10 +19,15 @@ MainWindow::MainWindow(QWidget *parent)
     ui->setupUi(this);
 
     paintView = new PaintView();
+
     setCentralWidget(paintView);
     createActions();
     createMenus();
     createTools();
+
+
+
+
     setWindowTitle("A Paint Tool");
     qDebug("MAIN WINDOW");
     resize(500,500);
@@ -164,7 +169,15 @@ void MainWindow::createMenus(){
 void MainWindow::createTools()
 {
     QPushButton *redColorButton = new QPushButton();
-    centralWidget->
+    //add redColorButton to the central widget
+    redColorButton->setText("Red");
+    redColorButton->setStyleSheet("background-color: red");
+    redColorButton->setGeometry(10,10,50,50);
+    redColorButton->show();
+    connect(redColorButton, SIGNAL(clicked()), this, SLOT(penColor()));
+
+    //add it to the form
+    this->layout()->addWidget(redColorButton);
 }
 
 
